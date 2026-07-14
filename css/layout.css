@@ -1,0 +1,125 @@
+/* =========================================================================
+   APP SHELL
+   ========================================================================= */
+
+#glow-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+  min-height: 100%;
+  padding: var(--space-5) var(--space-4) calc(var(--space-7) + 72px);
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.topbar h1 {
+  font-size: 1.15rem;
+}
+
+.topbar .greeting-sub {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  margin-top: 2px;
+}
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.view.hidden { display: none; }
+
+/* ---- card, the primary content container ---- */
+.card {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-5);
+}
+
+.card-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+}
+
+.card-title-row h2 {
+  font-size: 1rem;
+}
+
+.card-title-row .link-btn {
+  font-size: 0.82rem;
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+
+/* ---- stat grid on dashboard ---- */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+/* ---- floating pill dock nav ---- */
+.dock-nav {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-4);
+  transform: translateX(-50%);
+  z-index: 20;
+  display: flex;
+  gap: var(--space-1);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-pill);
+  padding: 6px;
+  box-shadow: var(--shadow-lg);
+}
+
+.dock-nav button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-pill);
+  color: var(--ink-faint);
+  transition: color 0.2s ease, background-color 0.2s ease, transform 0.15s ease;
+}
+
+.dock-nav button svg { width: 21px; height: 21px; }
+
+.dock-nav button:hover { color: var(--ink-soft); transform: translateY(-1px); }
+
+.dock-nav button.active {
+  color: var(--accent-ink);
+  background: var(--accent);
+}
+
+@media (min-width: 640px) {
+  #app { padding-top: var(--space-6); }
+  .stat-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 420px) {
+  .stat-grid { grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+  #app { padding-left: var(--space-3); padding-right: var(--space-3); }
+}

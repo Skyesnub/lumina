@@ -1,0 +1,94 @@
+/* =========================================================================
+   DESIGN TOKENS
+   One hue drives the entire palette. Changing --theme-hue re-tints every
+   surface, border, and accent instantly. Light/dark swap via body.dark-mode
+   — components never branch on light/dark themselves, they just read tokens.
+   ========================================================================= */
+
+:root {
+  --theme-hue: 226; /* default: calm indigo-blue */
+
+  /* ---- spacing scale (4px base) ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* ---- radius ---- */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  /* ---- type ---- */
+  --font-display: 'Space Grotesk', system-ui, sans-serif;
+  --font-body: 'Manrope', system-ui, sans-serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+
+  /* ---- shadow (tinted by hue, not neutral grey) ---- */
+  --shadow-sm: 0 1px 2px hsla(var(--theme-hue), 30%, 8%, 0.06);
+  --shadow-md: 0 6px 20px hsla(var(--theme-hue), 30%, 8%, 0.10);
+  --shadow-lg: 0 16px 40px hsla(var(--theme-hue), 30%, 8%, 0.16);
+
+  /* ---- light theme (default) ---- */
+  --ink: hsl(var(--theme-hue), 32%, 15%);
+  --ink-soft: hsl(var(--theme-hue), 14%, 44%);
+  --ink-faint: hsl(var(--theme-hue), 12%, 62%);
+  --surface: hsl(var(--theme-hue), 45%, 98%);
+  --surface-raised: hsl(0, 0%, 100%);
+  --surface-sunken: hsl(var(--theme-hue), 30%, 95%);
+  --border: hsl(var(--theme-hue), 22%, 89%);
+  --border-soft: hsl(var(--theme-hue), 25%, 93%);
+
+  --accent: hsl(var(--theme-hue), 70%, 56%);
+  --accent-strong: hsl(var(--theme-hue), 76%, 45%);
+  --accent-soft: hsl(var(--theme-hue), 85%, 95%);
+  --accent-ink: hsl(0, 0%, 100%);
+
+  --xp-track: hsl(var(--theme-hue), 24%, 91%);
+  --xp-fill-a: hsl(var(--theme-hue), 78%, 58%);
+  --xp-fill-b: hsl(calc(var(--theme-hue) + 24), 78%, 60%);
+
+  --success: hsl(150, 55%, 42%);
+  --danger: hsl(6, 70%, 55%);
+  --warning: hsl(38, 85%, 52%);
+}
+
+body.dark-mode {
+  --ink: hsl(var(--theme-hue), 25%, 93%);
+  --ink-soft: hsl(var(--theme-hue), 14%, 68%);
+  --ink-faint: hsl(var(--theme-hue), 12%, 48%);
+  --surface: hsl(var(--theme-hue), 28%, 8%);
+  --surface-raised: hsl(var(--theme-hue), 24%, 12%);
+  --surface-sunken: hsl(var(--theme-hue), 26%, 6%);
+  --border: hsl(var(--theme-hue), 20%, 20%);
+  --border-soft: hsl(var(--theme-hue), 20%, 16%);
+
+  --accent: hsl(var(--theme-hue), 72%, 64%);
+  --accent-strong: hsl(var(--theme-hue), 80%, 72%);
+  --accent-soft: hsla(var(--theme-hue), 70%, 60%, 0.16);
+  --accent-ink: hsl(var(--theme-hue), 40%, 10%);
+
+  --xp-track: hsl(var(--theme-hue), 22%, 17%);
+  --xp-fill-a: hsl(var(--theme-hue), 75%, 60%);
+  --xp-fill-b: hsl(calc(var(--theme-hue) + 24), 75%, 64%);
+
+  --shadow-sm: 0 1px 2px hsla(0, 0%, 0%, 0.24);
+  --shadow-md: 0 6px 20px hsla(0, 0%, 0%, 0.32);
+  --shadow-lg: 0 16px 40px hsla(0, 0%, 0%, 0.44);
+}
+
+/* Curated 7-point hue picker (not a raw rainbow slider — each stop chosen
+   to stay calm/muted rather than saturated "game UI" colors) */
+:root {
+  --hue-1: 12;   /* coral */
+  --hue-2: 38;   /* amber */
+  --hue-3: 152;  /* sage */
+  --hue-4: 188;  /* teal */
+  --hue-5: 226;  /* indigo (default) */
+  --hue-6: 258;  /* violet */
+  --hue-7: 322;  /* rose */
+}
