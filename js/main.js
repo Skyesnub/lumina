@@ -45,7 +45,7 @@ function renderAuthScreen(initialMode = 'signup') {
   const submitBtn = el('button', { type: 'submit', class: 'btn btn-primary' }, 'Start Playing');
   const toggleLink = el('button', { type: 'button', class: 'link-btn', style: 'align-self:center;' }, 'Already have an account? Log in');
 
-  const heading = el('h1', { style: 'font-size:1.3rem' }, 'Welcome to Lumen RPG');
+  const heading = el('h1', { style: 'font-size:1.3rem' }, 'Welcome to Lumina');
   const sub = el('p', { style: 'color:var(--ink-soft); font-size:0.88rem' }, 'Turn your real tasks into XP, levels, and streaks.');
 
   const card = el('form', { class: 'card', style: 'max-width:360px; margin:14vh auto 0; display:flex; flex-direction:column; gap:16px;' });
