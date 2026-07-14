@@ -1,18 +1,4 @@
--- =============================================================================
--- LUMEN RPG — SUPABASE SCHEMA (Phase 2)
---
--- Not required to use the app today — Phase 1 runs entirely on localStorage.
--- Run this in the Supabase SQL editor when you're ready to add real
--- accounts + cross-device sync (see js/database/supabase-client.js).
---
--- Pattern matches Lumen: every table is scoped to auth.uid() via row-level
--- security, with `on delete cascade` so deleting a user cleans up all of
--- their data automatically.
--- =============================================================================
-
--- ---------------------------------------------------------------------------
--- profiles — one row per user, created automatically on sign-up
--- ---------------------------------------------------------------------------
+--also in supabase
 create table if not exists profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   username text not null default 'Adventurer',
