@@ -116,7 +116,13 @@ const SORTERS = {
 
 export function sortTasks(tasks, key = 'created_at') {
   const sorter = SORTERS[key] || SORTERS.created_at;
-  return [...tasks].sort(sorter);
+  return [...tasks].sort((a, b) => {
+    // Completed tasks always sink below pending ones, no matter which
+    // sort key is active — status is the primary sort, the chosen key
+    // only breaks ties within each group.
+    if (a.status !== b.status) return a.status === 'completed' ? 1 : -1;
+    return sorter(a, b);
+  });
 }
 
 export function todaysTasks(tasks) {
