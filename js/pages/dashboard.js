@@ -7,6 +7,11 @@ import { ACHIEVEMENTS } from '../achievements/achievements-data.js';
 import { getStreakStatus } from '../streaks/streaks.js';
 import { formatNumber } from '../utils/format.js';
 
+const RECENT_LIMIT = 5;
+let recentExpanded = false;
+let lastState = null;
+let lastHandlers = null;
+
 // Built once at startup. xpBarPanel is the already-mounted, persistent XP
 // bar DOM node (see components/xp-bar.js) — it's inserted here but never
 // rebuilt, so its CSS width-transition animation survives every dashboard
@@ -16,7 +21,15 @@ export function mountDashboard(container, xpBarPanel) {
   const statGrid = el('div', { class: 'stat-grid' });
   const todayList = el('div');
   const recentList = el('div');
+  const recentToggle = el('button', { class: 'link-btn', style: 'margin-top:10px;' }, 'Show more');
   const achievementSummary = el('div', { class: 'stat-grid', style: 'grid-template-columns: 1fr auto;' });
+
+  const refs = { streakSlot, statGrid, todayList, recentList, recentToggle, achievementSummary };
+
+  recentToggle.addEventListener('click', () => {
+    recentExpanded = !recentExpanded;
+    if (lastState) updateDashboard(refs, lastState, lastHandlers);
+  });
 
   const view = el('div', { class: 'view', id: 'view-dashboard' }, [
     xpBarPanel,
@@ -34,6 +47,7 @@ export function mountDashboard(container, xpBarPanel) {
     el('div', { class: 'card' }, [
       el('div', { class: 'card-title-row' }, [el('h2', {}, 'Recently Completed')]),
       recentList,
+      recentToggle,
     ]),
     el('div', { class: 'card' }, [
       el('div', { class: 'card-title-row' }, [
@@ -45,10 +59,13 @@ export function mountDashboard(container, xpBarPanel) {
   ]);
 
   container.appendChild(view);
-  return { view, streakSlot, statGrid, todayList, recentList, achievementSummary };
+  return { view, streakSlot, statGrid, todayList, recentList, recentToggle, achievementSummary };
 }
 
 export function updateDashboard(refs, state, handlers) {
+  lastState = state;
+  lastHandlers = handlers;
+
   const { profile, tasks } = state;
   const streakStatus = getStreakStatus(profile);
 
@@ -64,7 +81,11 @@ export function updateDashboard(refs, state, handlers) {
   );
 
   renderTaskList(refs.todayList, todaysTasks(tasks).slice(0, 6), handlers, 'No tasks due — add one to start earning XP.');
-  renderTaskList(refs.recentList, recentlyCompleted(tasks, 5), handlers, 'Complete a task to see it here.');
+
+  const recentLimit = recentExpanded ? Infinity : RECENT_LIMIT;
+  renderTaskList(refs.recentList, recentlyCompleted(tasks, recentLimit), handlers, 'Complete a task to see it here.');
+  refs.recentToggle.classList.toggle('hidden', completedTotal <= RECENT_LIMIT);
+  refs.recentToggle.textContent = recentExpanded ? 'Show less' : `Show more (${completedTotal - RECENT_LIMIT} more)`;
 
   clear(refs.achievementSummary);
   const total = ACHIEVEMENTS.length;

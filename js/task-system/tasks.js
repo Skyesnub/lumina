@@ -135,3 +135,16 @@ export function recentlyCompleted(tasks, limit = 5) {
     .sort((a, b) => new Date(b.completed_at) - new Date(a.completed_at))
     .slice(0, limit);
 }
+
+/**
+ * Caps the COMPLETED portion of a mixed task list to the N most recently
+ * completed, leaving every pending task untouched regardless of count.
+ * "Most recent" is always by completed_at, independent of whatever sort
+ * key the caller later displays the list in — this decides which tasks
+ * make the cut, not what order they end up shown in.
+ */
+export function capCompletedTasks(tasks, limit = 5) {
+  const pending = tasks.filter(t => t.status !== 'completed');
+  const completed = recentlyCompleted(tasks, limit);
+  return [...pending, ...completed];
+}

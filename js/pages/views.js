@@ -1,6 +1,6 @@
 import { el, clear } from '../utils/dom.js';
 import { renderTaskList } from '../components/task-list.js';
-import { filterTasks, sortTasks, CATEGORIES } from '../task-system/tasks.js';
+import { filterTasks, sortTasks, capCompletedTasks, CATEGORIES } from '../task-system/tasks.js';
 import { achievementsByCategory } from '../achievements/achievements.js';
 import { renderAchievementGrid } from '../components/achievement-panel.js';
 import { statCard } from '../components/stat-card.js';
@@ -22,6 +22,7 @@ let taskFilterState = { status: null, category: null, sort: 'created_at' };
 export function renderTasksView(container, state, handlers) {
   clear(container);
   const list = el('div');
+  const cappedNote = el('div');
 
   const statusChips = el('div', { class: 'filter-bar' }, [
     chip('All', !taskFilterState.status, () => setFilter('status', null)),
@@ -51,8 +52,17 @@ export function renderTasksView(container, state, handlers) {
 
   function refresh() {
     const filtered = filterTasks(state.tasks, taskFilterState);
-    const sorted = sortTasks(filtered, taskFilterState.sort);
+    const capped = capCompletedTasks(filtered, 5);
+    const sorted = sortTasks(capped, taskFilterState.sort);
     renderTaskList(list, sorted, handlers, 'No tasks match these filters.');
+
+    const hiddenCompletedCount = filtered.filter(t => t.status === 'completed').length - capped.filter(t => t.status === 'completed').length;
+    clear(cappedNote);
+    if (hiddenCompletedCount > 0) {
+      cappedNote.appendChild(el('div', { style: 'color:var(--ink-faint); font-size:0.78rem; margin-top:10px;' },
+        `Showing your 5 most recently completed — see your full history from the dashboard.`));
+    }
+
     statusChips.querySelectorAll('button').forEach((b, i) => b.classList.toggle('active', [!taskFilterState.status, taskFilterState.status === 'pending', taskFilterState.status === 'completed'][i]));
     categoryChips.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.textContent === (taskFilterState.category || 'All Categories')));
   }
@@ -70,6 +80,7 @@ export function renderTasksView(container, state, handlers) {
         el('div', { class: 'field', style: 'width:160px' }, [el('label', {}, 'Sort by'), sortSelect]),
       ]),
       el('div', { style: 'margin-top:8px' }, [list]),
+      cappedNote,
     ]),
   ]);
 
