@@ -22,6 +22,7 @@ let activeView = 'dashboard';
 let freshAchievementKeys = new Set();
 let dashboardRefs, navApi, xpBar, levelUpModal, toastStack, taskForm;
 let dashboardContainer, tasksContainer, achievementsContainer, profileContainer;
+let repeatingTaskTimer = null;
 
 function renderLoading(message) {
   clear(appRoot);
@@ -132,6 +133,10 @@ async function afterAuthSuccess(session) {
 --------------------------------------------------------------------------- */
 
 function boot() {
+  // Reconcile tasks that became due while the app was closed before the
+  // first render, then keep the open app in sync at each local midnight.
+  taskSystem.activateDueRepeatingTasks();
+  scheduleRepeatingTaskRefresh();
   clear(appRoot);
   applyTheme(getState().profile);
 
@@ -211,6 +216,20 @@ function refreshAll() {
   if (activeView === 'tasks') renderTasksView(tasksContainer, state, taskHandlers);
   if (activeView === 'achievements') renderAchievementsView(achievementsContainer, state, freshAchievementKeys);
   if (activeView === 'profile') renderProfileView(profileContainer, state, profileHandlers);
+}
+
+function scheduleRepeatingTaskRefresh() {
+  clearTimeout(repeatingTaskTimer);
+  const nextMidnight = new Date();
+  nextMidnight.setHours(24, 0, 1, 0);
+  const delay = nextMidnight.getTime() - Date.now();
+
+  repeatingTaskTimer = setTimeout(() => {
+    taskSystem.activateDueRepeatingTasks();
+    updateGreeting();
+    refreshAll();
+    scheduleRepeatingTaskRefresh();
+  }, delay);
 }
 
 function updateGreeting() {

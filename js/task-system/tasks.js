@@ -2,6 +2,7 @@ import { getState, saveState, emit, logActivity } from '../database/local-store.
 import { xpForDifficulty, applyXpGain } from '../xp-system/leveling.js';
 import { recordCompletionForStreak } from '../streaks/streaks.js';
 import { checkAchievements } from '../achievements/achievements.js';
+import { todayKey } from '../utils/format.js';
 
 export const CATEGORIES = ['School', 'Training', 'Personal', 'Chores', 'Health', 'Other'];
 export const PRIORITIES = ['low', 'medium', 'high'];
@@ -21,7 +22,7 @@ function nextRepeatDate(repeat, fromDate = new Date()) {
     date.setDate(Math.min(day, lastDay));
   }
 
-  return date.toISOString().slice(0, 10);
+  return todayKey(date);
 }
 
 export function taskCompletionCount(task) {
@@ -83,6 +84,43 @@ export function deleteTask(id) {
 }
 
 /**
+ * Reopen recurring tasks only once their next scheduled date has arrived.
+ * This runs at startup and after each local midnight, so completed recurring
+ * tasks stay visible in the completion history until they are due again.
+ */
+export function activateDueRepeatingTasks(now = new Date()) {
+  const state = getState();
+  const today = todayKey(now);
+  const changedTasks = [];
+
+  for (const task of state.tasks) {
+    if (!task.repeat || task.repeat === 'none' || !task.due_date) continue;
+
+    if (task.status === 'completed' && task.due_date <= today) {
+      task.status = 'pending';
+      task.completed_at = null;
+      changedTasks.push(task);
+      continue;
+    }
+
+    // Repair tasks completed with the previous recurrence behavior: those
+    // were incorrectly saved as pending even though their next due date is
+    // still in the future.
+    if (task.status === 'pending' && taskCompletionCount(task) > 0 && task.due_date > today) {
+      task.status = 'completed';
+      task.completed_at ||= now.toISOString();
+      changedTasks.push(task);
+    }
+  }
+
+  if (changedTasks.length) {
+    saveState(state);
+    changedTasks.forEach(task => emit('task-updated', task));
+  }
+  return changedTasks;
+}
+
+/**
  * Complete a task: marks it done, awards XP, updates level, updates the
  * streak, logs activity, and checks whether any achievements just unlocked.
  * Returns a single report object the UI uses to drive every piece of
@@ -96,11 +134,12 @@ export function completeTask(id) {
   const completedAt = new Date().toISOString();
   task.completion_count = taskCompletionCount(task) + 1;
 
-  // A repeating task remains a single record. It is rescheduled as pending
-  // right away, so it never exists in both the completed and pending lists.
+  // A repeating task remains a single record. It stays completed (and in
+  // Recent) until its next scheduled day, when activateDueRepeatingTasks()
+  // moves it back to pending.
   if (task.repeat && task.repeat !== 'none') {
-    task.status = 'pending';
-    task.completed_at = null;
+    task.status = 'completed';
+    task.completed_at = completedAt;
     task.due_date = nextRepeatDate(task.repeat);
   } else {
     task.status = 'completed';
