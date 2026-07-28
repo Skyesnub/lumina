@@ -1,9 +1,11 @@
+import { taskCompletionCount } from '../task-system/tasks.js';
+
 // Each condition receives the full app state and returns true/false.
 // Conditions must be cheap and side-effect free — they're re-evaluated
 // after every task completion.
 
 function completedCount(state) {
-  return state.tasks.filter(t => t.status === 'completed').length;
+  return state.tasks.reduce((total, task) => total + taskCompletionCount(task), 0);
 }
 
 export const ACHIEVEMENTS = [

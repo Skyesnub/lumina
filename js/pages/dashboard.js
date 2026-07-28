@@ -1,7 +1,7 @@
 import { el, clear } from '../utils/dom.js';
 import { statCard, streakPill } from '../components/stat-card.js';
 import { renderTaskList } from '../components/task-list.js';
-import { todaysTasks, recentlyCompleted } from '../task-system/tasks.js';
+import { todaysTasks, recentlyCompleted, taskCompletionCount } from '../task-system/tasks.js';
 import { unlockedCount } from '../achievements/achievements.js';
 import { ACHIEVEMENTS } from '../achievements/achievements-data.js';
 import { getStreakStatus } from '../streaks/streaks.js';
@@ -73,7 +73,7 @@ export function updateDashboard(refs, state, handlers) {
   refs.streakSlot.appendChild(streakPill(profile.current_streak, streakStatus.state === 'at-risk'));
 
   clear(refs.statGrid);
-  const completedTotal = tasks.filter(t => t.status === 'completed').length;
+  const completedTotal = tasks.reduce((total, task) => total + taskCompletionCount(task), 0);
   refs.statGrid.append(
     statCard(profile.current_level, 'Level'),
     statCard(formatNumber(profile.total_xp), 'Total XP'),
@@ -84,8 +84,9 @@ export function updateDashboard(refs, state, handlers) {
 
   const recentLimit = recentExpanded ? Infinity : RECENT_LIMIT;
   renderTaskList(refs.recentList, recentlyCompleted(tasks, recentLimit), handlers, 'Complete a task to see it here.');
-  refs.recentToggle.classList.toggle('hidden', completedTotal <= RECENT_LIMIT);
-  refs.recentToggle.textContent = recentExpanded ? 'Show less' : `Show more (${completedTotal - RECENT_LIMIT} more)`;
+  const recentCompletedTotal = tasks.filter(t => t.status === 'completed').length;
+  refs.recentToggle.classList.toggle('hidden', recentCompletedTotal <= RECENT_LIMIT);
+  refs.recentToggle.textContent = recentExpanded ? 'Show less' : `Show more (${recentCompletedTotal - RECENT_LIMIT} more)`;
 
   clear(refs.achievementSummary);
   const total = ACHIEVEMENTS.length;

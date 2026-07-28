@@ -271,7 +271,10 @@ const taskHandlers = {
     if (task) taskForm.showForEdit(task);
   },
   onDelete(id) {
-    taskSystem.deleteTask(id);
+    const task = taskSystem.getTaskById(id);
+    if (task && confirm(`Delete “${task.name}”? This cannot be undone.`)) {
+      taskSystem.deleteTask(id);
+    }
   },
   onAddTask() {
     taskForm.showForCreate();

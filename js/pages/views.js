@@ -1,6 +1,6 @@
 import { el, clear } from '../utils/dom.js';
 import { renderTaskList } from '../components/task-list.js';
-import { filterTasks, sortTasks, capCompletedTasks, CATEGORIES } from '../task-system/tasks.js';
+import { filterTasks, sortTasks, capCompletedTasks, CATEGORIES, taskCompletionCount } from '../task-system/tasks.js';
 import { achievementsByCategory } from '../achievements/achievements.js';
 import { renderAchievementGrid } from '../components/achievement-panel.js';
 import { statCard } from '../components/stat-card.js';
@@ -132,7 +132,7 @@ export function renderProfileView(container, state, handlers) {
   const usernameInput = el('input', { type: 'text', value: profile.username, maxlength: 24 });
   usernameInput.addEventListener('change', () => handlers.onRename(usernameInput.value));
 
-  const completedTotal = tasks.filter(t => t.status === 'completed').length;
+  const completedTotal = tasks.reduce((total, task) => total + taskCompletionCount(task), 0);
 
   const view = el('div', { class: 'view', id: 'view-profile' }, [
     el('div', { class: 'card' }, [

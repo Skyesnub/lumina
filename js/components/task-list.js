@@ -1,6 +1,7 @@
 import { el, clear } from '../utils/dom.js';
 import { formatDate, isOverdue } from '../utils/format.js';
 import { DIFFICULTY_LABELS } from '../xp-system/leveling.js';
+import { taskCompletionCount } from '../task-system/tasks.js';
 
 const CHECK_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l5 5L20 6"/></svg>';
 const EDIT_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>';
@@ -17,6 +18,10 @@ function taskItem(task, { onComplete, onEdit, onDelete }) {
   ];
   if (task.due_date) {
     tags.push(el('span', { class: 'tag' + (overdue ? ' tag-overdue' : '') }, formatDate(task.due_date)));
+  }
+  if (task.repeat && task.repeat !== 'none') {
+    tags.push(el('span', { class: 'tag' }, `Repeats ${task.repeat}`));
+    tags.push(el('span', { class: 'tag' }, `Done ${taskCompletionCount(task)}×`));
   }
 
   const item = el('div', { class: 'task-item' + (isDone ? ' completed' : '') }, [

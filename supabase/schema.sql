@@ -50,6 +50,9 @@ create table if not exists tasks (
     check (priority in ('low','medium','high')),
   due_date date,
   estimated_minutes integer,
+  repeat text not null default 'none'
+    check (repeat in ('none', 'daily', 'weekly', 'monthly')),
+  completion_count integer not null default 0,
   status text not null default 'pending' check (status in ('pending','completed')),
   xp_reward integer not null default 35,
   created_at timestamptz not null default now(),
@@ -68,6 +71,12 @@ create policy "tasks are owner-scoped delete" on tasks
   for delete using (auth.uid() = user_id);
 
 create index if not exists tasks_user_id_idx on tasks(user_id);
+
+-- Safe upgrade for projects that created the tasks table before repeating
+-- tasks were available.
+alter table tasks add column if not exists repeat text not null default 'none'
+  check (repeat in ('none', 'daily', 'weekly', 'monthly'));
+alter table tasks add column if not exists completion_count integer not null default 0;
 
 -- ---------------------------------------------------------------------------
 -- achievements — unlock records, one row per user per unlocked achievement

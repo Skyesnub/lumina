@@ -1,10 +1,17 @@
 import { el } from '../utils/dom.js';
-import { CATEGORIES } from '../task-system/tasks.js';
+import { CATEGORIES, REPEAT_OPTIONS } from '../task-system/tasks.js';
 import { DIFFICULTY_XP, DIFFICULTY_LABELS } from '../xp-system/leveling.js';
 
 function option(value, label, selected) {
   return el('option', { value, selected: selected || undefined }, label);
 }
+
+const REPEAT_LABELS = {
+  none: 'Does not repeat',
+  daily: 'Every day',
+  weekly: 'Every week',
+  monthly: 'Every month',
+};
 
 export function mountTaskForm(container, { onSubmit }) {
   const nameInput = el('input', { type: 'text', required: true, maxlength: 80, placeholder: 'e.g. Finish lab report' });
@@ -14,6 +21,9 @@ export function mountTaskForm(container, { onSubmit }) {
   const prioritySelect = el('select', {}, [option('low', 'Low'), option('medium', 'Medium', true), option('high', 'High')]);
   const dueInput = el('input', { type: 'date' });
   const estimateInput = el('input', { type: 'number', min: 0, placeholder: '30' });
+  const repeatSelect = el('select', {}, [
+    ...REPEAT_OPTIONS.map(repeat => option(repeat, REPEAT_LABELS[repeat])),
+  ]);
 
   const heading = el('h2', {}, 'New Task');
   let editingId = null;
@@ -30,6 +40,7 @@ export function mountTaskForm(container, { onSubmit }) {
       el('div', { class: 'field' }, [el('label', {}, 'Due date'), dueInput]),
     ]),
     el('div', { class: 'field' }, [el('label', {}, 'Estimated minutes'), estimateInput]),
+    el('div', { class: 'field' }, [el('label', {}, 'Repeat'), repeatSelect]),
     el('div', { style: 'display:flex; gap:10px; margin-top:4px;' }, [
       el('button', { type: 'submit', class: 'btn btn-primary', style: 'flex:1' }, 'Save Task'),
       el('button', { type: 'button', class: 'btn btn-ghost', onClick: () => hide() }, 'Cancel'),
@@ -49,6 +60,7 @@ export function mountTaskForm(container, { onSubmit }) {
     prioritySelect.value = 'medium';
     dueInput.value = '';
     estimateInput.value = '';
+    repeatSelect.value = 'none';
     editingId = null;
   }
 
@@ -71,6 +83,7 @@ export function mountTaskForm(container, { onSubmit }) {
     prioritySelect.value = task.priority;
     dueInput.value = task.due_date || '';
     estimateInput.value = task.estimated_minutes || '';
+    repeatSelect.value = task.repeat || 'none';
     overlay.classList.add('show');
     setTimeout(() => nameInput.focus(), 50);
   }
@@ -86,6 +99,7 @@ export function mountTaskForm(container, { onSubmit }) {
       priority: prioritySelect.value,
       due_date: dueInput.value || null,
       estimated_minutes: estimateInput.value || null,
+      repeat: repeatSelect.value,
     });
     hide();
   });

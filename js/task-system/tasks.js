@@ -5,6 +5,30 @@ import { checkAchievements } from '../achievements/achievements.js';
 
 export const CATEGORIES = ['School', 'Training', 'Personal', 'Chores', 'Health', 'Other'];
 export const PRIORITIES = ['low', 'medium', 'high'];
+export const REPEAT_OPTIONS = ['none', 'daily', 'weekly', 'monthly'];
+
+function nextRepeatDate(repeat, fromDate = new Date()) {
+  const date = new Date(fromDate);
+  date.setHours(0, 0, 0, 0);
+
+  if (repeat === 'daily') date.setDate(date.getDate() + 1);
+  if (repeat === 'weekly') date.setDate(date.getDate() + 7);
+  if (repeat === 'monthly') {
+    const day = date.getDate();
+    date.setDate(1);
+    date.setMonth(date.getMonth() + 1);
+    const lastDay = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
+    date.setDate(Math.min(day, lastDay));
+  }
+
+  return date.toISOString().slice(0, 10);
+}
+
+export function taskCompletionCount(task) {
+  // Existing saved tasks predate completion_count. Preserve their one
+  // completion when calculating lifetime stats after the upgrade.
+  return Number(task.completion_count || 0) + (task.status === 'completed' && !task.completion_count ? 1 : 0);
+}
 
 export function getTasks() {
   return getState().tasks;
@@ -26,6 +50,8 @@ export function createTask(input) {
     priority: input.priority || 'medium',
     due_date: input.due_date || null,
     estimated_minutes: input.estimated_minutes ? Number(input.estimated_minutes) : null,
+    repeat: REPEAT_OPTIONS.includes(input.repeat) ? input.repeat : 'none',
+    completion_count: 0,
     status: 'pending',
     xp_reward: xpForDifficulty(input.difficulty || 'medium'),
     created_at: new Date().toISOString(),
@@ -43,6 +69,7 @@ export function updateTask(id, patch) {
   if (!task) return null;
   Object.assign(task, patch);
   if (patch.difficulty) task.xp_reward = xpForDifficulty(patch.difficulty);
+  if (patch.repeat && !REPEAT_OPTIONS.includes(patch.repeat)) task.repeat = 'none';
   saveState(state);
   emit('task-updated', task);
   return task;
@@ -66,13 +93,30 @@ export function completeTask(id) {
   const task = state.tasks.find(t => t.id === id);
   if (!task || task.status === 'completed') return null;
 
-  task.status = 'completed';
-  task.completed_at = new Date().toISOString();
+  const completedAt = new Date().toISOString();
+  task.completion_count = taskCompletionCount(task) + 1;
+
+  // A repeating task remains a single record. It is rescheduled as pending
+  // right away, so it never exists in both the completed and pending lists.
+  if (task.repeat && task.repeat !== 'none') {
+    task.status = 'pending';
+    task.completed_at = null;
+    task.due_date = nextRepeatDate(task.repeat);
+  } else {
+    task.status = 'completed';
+    task.completed_at = completedAt;
+  }
 
   const xpResult = applyXpGain(state.profile, task.xp_reward);
   const streakResult = recordCompletionForStreak(state.profile);
 
-  logActivity('task_complete', { taskId: task.id, name: task.name, xp: task.xp_reward });
+  logActivity('task_complete', {
+    taskId: task.id,
+    name: task.name,
+    xp: task.xp_reward,
+    completionCount: task.completion_count,
+    repeat: task.repeat || 'none',
+  });
   if (xpResult.leveledUp) {
     logActivity('level_up', { fromLevel: xpResult.fromLevel, toLevel: xpResult.toLevel });
   }
@@ -117,11 +161,17 @@ const SORTERS = {
 export function sortTasks(tasks, key = 'created_at') {
   const sorter = SORTERS[key] || SORTERS.created_at;
   return [...tasks].sort((a, b) => {
-    // Completed tasks always sink below pending ones, no matter which
-    // sort key is active — status is the primary sort, the chosen key
-    // only breaks ties within each group.
+    // Completed tasks always sink below pending ones. Pending work is
+    // always prioritized high-to-low; the selected sort only breaks ties.
+    // Completed tasks remain in creation order, independent of the pending
+    // task sort, so their history stays stable and easy to scan.
     if (a.status !== b.status) return a.status === 'completed' ? 1 : -1;
-    return sorter(a, b);
+    if (a.status !== 'completed') {
+      const priorityDifference = PRIORITIES.indexOf(b.priority) - PRIORITIES.indexOf(a.priority);
+      if (priorityDifference) return priorityDifference;
+      return sorter(a, b);
+    }
+    return SORTERS.created_at(a, b);
   });
 }
 
