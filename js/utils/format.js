@@ -4,7 +4,9 @@ export function formatNumber(n) {
 
 export function formatDate(isoString) {
   if (!isoString) return '';
-  const d = new Date(isoString);
+  // Task due dates are date-only values (YYYY-MM-DD). Parsing them directly
+  // treats them as UTC, which can display the previous day in US time zones.
+  const d = new Date(/^\d{4}-\d{2}-\d{2}$/.test(isoString) ? `${isoString}T00:00:00` : isoString);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 

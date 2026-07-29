@@ -215,7 +215,9 @@ export function sortTasks(tasks, key = 'created_at') {
 }
 
 export function todaysTasks(tasks) {
-  return tasks.filter(t => t.status === 'pending');
+  // The dashboard uses this helper directly rather than the Tasks page's
+  // sorter, so apply the same high-to-low priority ordering here as well.
+  return sortTasks(tasks.filter(t => t.status === 'pending'));
 }
 
 export function recentlyCompleted(tasks, limit = 5) {
